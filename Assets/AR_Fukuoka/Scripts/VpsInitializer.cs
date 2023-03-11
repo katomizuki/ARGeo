@@ -1,51 +1,19 @@
-// <copyright file="GeospatialController.cs" company="Google LLC">
-//
-// Copyright 2022 Google LLC
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
-//
-// </copyright>
-//-----------------------------------------------------------------------
+
 namespace AR_Fukuoka
 {
-    using System;
     using System.Collections;
-    using System.Collections.Generic;
     using Google.XR.ARCoreExtensions;
     using UnityEngine;
-    using UnityEngine.Android;
-    using UnityEngine.UI;
     using UnityEngine.XR.ARFoundation;
-    using UnityEngine.XR.ARSubsystems;
 
-    /// <summary>
-    /// Controller for Geospatial sample.
-    /// </summary>
     public class VpsInitializer : MonoBehaviour
     {
         [Header("AR Components")]
 
-        /// <summary>
-        /// The AREarthManager used in the sample.
-        /// </summary>
         [SerializeField] AREarthManager EarthManager;
-
-        /// <summary>
-        /// The ARCoreExtensions used in the sample.
-        /// </summary>
+  
         [SerializeField] ARCoreExtensions ARCoreExtensions;
 
-        //private bool _isInARView = false;
         private bool _isReturning = false;
         private bool _enablingGeospatial = false;
         private float _configurePrepareTime = 3f;
@@ -56,9 +24,7 @@ namespace AR_Fukuoka
         public bool _lockScreenToPortrait = true;
 
         private IEnumerator _startLocationService = null;
-        /// <summary>
-        /// Unity's Awake() method.
-        /// </summary>
+       
         public void Awake()
         {
             if (_lockScreenToPortrait)
@@ -69,9 +35,7 @@ namespace AR_Fukuoka
                 Screen.autorotateToPortraitUpsideDown = false;
                 Screen.orientation = ScreenOrientation.Portrait;
             }
-            // Enable geospatial sample to target 60fps camera capture frame rate
-            // on supported devices.
-            // Note, Application.targetFrameRate is ignored when QualitySettings.vSyncCount != 0.
+            
             Application.targetFrameRate = 60;
 
             if (ARCoreExtensions == null)
@@ -80,9 +44,6 @@ namespace AR_Fukuoka
             }
         }
 
-        /// <summary>
-        /// Unity's OnEnable() method.
-        /// </summary>
         public void OnEnable()
         {       
             _isReturning = false;
@@ -95,14 +56,7 @@ namespace AR_Fukuoka
         private IEnumerator StartLocationService()
         {
             _waitingForLocationService = true;
-#if UNITY_ANDROID
-            if (!Permission.HasUserAuthorizedPermission(Permission.FineLocation))
-            {
-                Debug.Log("Requesting fine location permission.");
-                Permission.RequestUserPermission(Permission.FineLocation);
-                yield return new WaitForSeconds(3.0f);
-            }
-#endif
+
 
             if (!Input.location.isEnabledByUser)
             {
@@ -127,9 +81,6 @@ namespace AR_Fukuoka
                 Input.location.Stop();
             }
         }
-        /// <summary>
-        /// Unity's OnDisable() method.
-        /// </summary>
         public void OnDisable()
         {
             StopCoroutine(_startLocationService);
@@ -138,9 +89,6 @@ namespace AR_Fukuoka
             Input.location.Stop();
         }
 
-        /// <summary>
-        /// Unity's Update() method.
-        /// </summary>
         public void Update()
         {
             // Check session error status.
@@ -150,6 +98,7 @@ namespace AR_Fukuoka
                 return;
             }
 
+            // トラッキング状態ではない場合はreturn
             if (ARSession.state != ARSessionState.SessionInitializing &&
                 ARSession.state != ARSessionState.SessionTracking)
             {
@@ -157,6 +106,7 @@ namespace AR_Fukuoka
             }
 
             // Check feature support and enable Geospatial API when it's supported.
+            // ジオスパチュアルAPIをサポートしているかチェックする。
             var featureSupport = EarthManager.IsGeospatialModeSupported(GeospatialMode.Enabled);
             switch (featureSupport)
             {
@@ -181,6 +131,7 @@ namespace AR_Fukuoka
             }
 
             // Waiting for new configuration taking effect.
+            // geospatialapiに対応していたら
             if (_enablingGeospatial)
             {
                 _configurePrepareTime -= Time.deltaTime;
@@ -195,6 +146,7 @@ namespace AR_Fukuoka
             }
 
             // Check earth state.
+            // EarthManagerのStateをチェック。
             var earthState = EarthManager.EarthState;
             if (earthState == EarthState.ErrorEarthNotReady)
             {
@@ -209,6 +161,7 @@ namespace AR_Fukuoka
             }
 
             // Check earth localization.
+            // ARSessionがトラッキング中かつ　ロケーションが動いている。
             bool isSessionReady = ARSession.state == ARSessionState.SessionTracking &&
                 Input.location.status == LocationServiceStatus.Running;
             //If the process can reach this line and isSessionReady is true, the GeospatialAPI is available
@@ -275,7 +228,6 @@ namespace AR_Fukuoka
             Debug.LogError(reason);
             _isReturning = true;
             _isReady = false;
-            //Invoke(nameof(QuitApplication), _errorDisplaySeconds);
         }
 
         private void QuitApplication()
